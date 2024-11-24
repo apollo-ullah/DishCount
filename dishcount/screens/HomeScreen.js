@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -6,20 +6,19 @@ import {
     TouchableOpacity,
     ScrollView,
     TextInput,
-    SafeAreaView
+    SafeAreaView,
+    Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 import discountData from '../assets/discountData';
 
 export default function HomeScreen({ navigation }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('Explore');
     const [favorites, setFavorites] = useState([]);
-
-    const filteredData = discountData.filter(item =>
-        item.Store.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.Category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const [userLocation, setUserLocation] = useState(null);
+    const [locationsWithDistance, setLocationsWithDistance] = useState([]);
 
     const toggleFavorite = (store) => {
         setFavorites(prev =>
@@ -29,20 +28,111 @@ export default function HomeScreen({ navigation }) {
         );
     };
 
+    useEffect(() => {
+        (async () => {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status === 'granted') {
+                let location = await Location.getCurrentPositionAsync({});
+                setUserLocation(location);
+                calculateDistances(location);
+            }
+        })();
+    }, []);
+
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    };
+
+    const calculateDistances = (userLoc) => {
+        const locationsWithDist = discountData.map(location => {
+            if (location.isCityWide) {
+                return { ...location };
+            }
+
+            if (location.Coordinates && location.Coordinates.trim()) {
+                const [lat, lon] = location.Coordinates.split(',').map(coord => parseFloat(coord.trim()));
+                const distance = calculateDistance(
+                    userLoc.coords.latitude,
+                    userLoc.coords.longitude,
+                    lat,
+                    lon
+                );
+                return { ...location, distance };
+            }
+            return { ...location };
+        });
+        setLocationsWithDistance(locationsWithDist);
+    };
+
+    const getTagStyle = (tag) => {
+        switch (tag.toLowerCase()) {
+            case 'locally owned, npo':
+                return {
+                    text: '#27ae60',
+                    bg: '#edfaf1',
+                    border: '#d5f5e3'
+                };
+            case 'limited time':
+                return {
+                    text: '#e67e22',
+                    bg: '#fef5ec',
+                    border: '#fdebd0'
+                };
+            case 'locally owned':
+                return {
+                    text: '#27ae60',
+                    bg: '#edfaf1',
+                    border: '#d5f5e3'
+                };
+            case 'codejam special':
+                return {
+                    text: '#8e44ad',
+                    bg: '#f4ecf7',
+                    border: '#e8daef'
+                };
+            default:
+                return {
+                    text: '#ff6347',
+                    bg: '#fff0ee',
+                    border: '#ffe5e1'
+                };
+        }
+    };
+
     const renderFoodCard = ({ item }) => (
         <TouchableOpacity
             style={styles.foodCard}
             onPress={() => {
-                const [lat, lon] = item.Coordinates.split(',').map(coord => parseFloat(coord.trim()));
-                navigation.navigate('Map', {
-                    initialRegion: {
-                        latitude: lat,
-                        longitude: lon,
-                        latitudeDelta: 0.001,
-                        longitudeDelta: 0.001,
-                    },
-                    selectedStore: item.Store
-                });
+                if (item.isCityWide) {
+                    navigation.navigate('Map', {
+                        initialRegion: {
+                            latitude: 45.5019,
+                            longitude: -73.5674,
+                            latitudeDelta: 0.1,
+                            longitudeDelta: 0.1,
+                        },
+                        selectedStore: item.Store
+                    });
+                } else {
+                    const [lat, lon] = item.Coordinates.split(',').map(coord => parseFloat(coord.trim()));
+                    navigation.navigate('Map', {
+                        initialRegion: {
+                            latitude: lat,
+                            longitude: lon,
+                            latitudeDelta: 0.001,
+                            longitudeDelta: 0.001,
+                        },
+                        selectedStore: item.Store
+                    });
+                }
             }}
         >
             <View style={styles.foodCardContent}>
@@ -64,9 +154,154 @@ export default function HomeScreen({ navigation }) {
                 </View>
                 <Text style={styles.foodCategory}>{item.Category}</Text>
                 <Text style={styles.foodForm}>{item.Form}</Text>
+                <View style={styles.cardFooter}>
+                    {item.isCityWide ? (
+                        <Text style={styles.cityWideText}>
+                            Available across Montreal
+                        </Text>
+                    ) : item.distance && (
+                        <Text style={styles.distanceText}>
+                            {item.distance.toFixed(2)} km away
+                        </Text>
+                    )}
+                    {item.AdditionalTag && (
+                        <View style={styles.tagContainer}>
+                            <Text style={[
+                                styles.additionalTag,
+                                {
+                                    color: getTagStyle(item.AdditionalTag).text,
+                                    backgroundColor: getTagStyle(item.AdditionalTag).bg,
+                                    borderColor: getTagStyle(item.AdditionalTag).border
+                                }
+                            ]}>
+                                {item.AdditionalTag}
+                            </Text>
+                        </View>
+                    )}
+                </View>
             </View>
         </TouchableOpacity>
     );
+
+    const renderSection = (title, data) => (
+        <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{title}</Text>
+            {title === "Promotions" ? (
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.promotionsScroll}
+                >
+                    <View style={styles.promotionsContainer}>
+                        {data.map((item, index) => (
+                            <View key={index} style={[styles.foodCardWrapper, styles.promotionCardWrapper]}>
+                                <TouchableOpacity
+                                    style={[styles.foodCard, styles.promotionCard]}
+                                    onPress={() => {
+                                        const [lat, lon] = item.Coordinates.split(',').map(coord => parseFloat(coord.trim()));
+                                        navigation.navigate('Map', {
+                                            initialRegion: {
+                                                latitude: lat,
+                                                longitude: lon,
+                                                latitudeDelta: 0.001,
+                                                longitudeDelta: 0.001,
+                                            },
+                                            selectedStore: item.Store
+                                        });
+                                    }}
+                                >
+                                    <View style={styles.promotionContent}>
+                                        <View style={styles.promotionBadge}>
+                                            <Text style={styles.promotionBadgeText}>SPECIAL</Text>
+                                        </View>
+                                        <Text style={styles.promotionTitle}>{item.Store}</Text>
+                                        <Text style={styles.promotionDiscount}>{item.Discount}</Text>
+                                        {item.AdditionalTag && (
+                                            <Text style={styles.promotionTag}>{item.AdditionalTag}</Text>
+                                        )}
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </View>
+                </ScrollView>
+            ) : (
+                <View style={styles.foodCardsContainer}>
+                    {data.map((item, index) => (
+                        <View key={index} style={styles.foodCardWrapper}>
+                            {renderFoodCard({ item })}
+                        </View>
+                    ))}
+                </View>
+            )}
+        </View>
+    );
+
+    const filteredAndSortedData = () => {
+        let data = locationsWithDistance;
+        if (searchQuery) {
+            data = data.filter(item =>
+                item.Store.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.Category.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+        if (activeTab === 'Favorites') {
+            data = data.filter(item => favorites.includes(item.Store));
+        }
+
+        return data.sort((a, b) => {
+            if (a.isCityWide) return 1;
+            if (b.isCityWide) return -1;
+            if (!a.distance && !b.distance) return 0;
+            if (!a.distance) return 1;
+            if (!b.distance) return -1;
+            return a.distance - b.distance;
+        });
+    };
+
+    const promotions = locationsWithDistance.filter(item =>
+        item.Promotions === "1"
+    );
+
+    const renderContent = () => {
+        if (activeTab === 'Favorites') {
+            const favoriteItems = locationsWithDistance
+                .filter(item => favorites.includes(item.Store))
+                .sort((a, b) => a.Store.localeCompare(b.Store));
+
+            if (favoriteItems.length === 0) {
+                return (
+                    <View style={styles.emptyState}>
+                        <Ionicons name="heart" size={64} color="#ddd" />
+                        <Text style={styles.emptyStateText}>No favorites yet</Text>
+                        <Text style={styles.emptyStateSubtext}>
+                            Start adding your favorite places by tapping the heart icon
+                        </Text>
+                    </View>
+                );
+            }
+
+            return (
+                <View style={styles.foodCardsContainer}>
+                    {favoriteItems.map((item, index) => (
+                        <View key={index} style={styles.foodCardWrapper}>
+                            {renderFoodCard({ item })}
+                        </View>
+                    ))}
+                </View>
+            );
+        } else {
+            return (
+                <>
+                    {!searchQuery && renderSection("Promotions", promotions)}
+                    {renderSection(
+                        searchQuery ? "Search Results" : "Nearby",
+                        filteredAndSortedData()
+                    )}
+                </>
+            );
+        }
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -110,14 +345,7 @@ export default function HomeScreen({ navigation }) {
             </View>
 
             <ScrollView style={styles.scrollView}>
-                <View style={styles.foodCardsContainer}>
-                    {(activeTab === 'Explore' ? filteredData : filteredData.filter(item => favorites.includes(item.Store)))
-                        .map((item, index) => (
-                            <View key={index} style={styles.foodCardWrapper}>
-                                {renderFoodCard({ item })}
-                            </View>
-                        ))}
-                </View>
+                {renderContent()}
             </ScrollView>
 
             <TouchableOpacity
@@ -269,5 +497,113 @@ const styles = StyleSheet.create({
     heartButton: {
         marginLeft: 8,
         padding: 4,
+    },
+    section: {
+        marginBottom: 24,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginLeft: 16,
+        marginBottom: 12,
+        color: '#333',
+    },
+    promotionsScroll: {
+        marginBottom: 8,
+    },
+    promotionsContainer: {
+        flexDirection: 'row',
+        paddingLeft: 16,
+    },
+    promotionCardWrapper: {
+        width: Dimensions.get('window').width - 32,
+        marginRight: 16,
+    },
+    distanceText: {
+        fontSize: 12,
+        color: '#666',
+        fontWeight: '500',
+    },
+    tagContainer: {
+        alignSelf: 'flex-end',
+    },
+    additionalTag: {
+        fontSize: 11,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        overflow: 'hidden',
+        borderWidth: 1,
+    },
+    cityWideText: {
+        fontSize: 12,
+        color: '#666',
+        fontWeight: '500',
+        fontStyle: 'italic',
+    },
+    promotionCard: {
+        backgroundColor: '#ff6347',
+        width: '100%',
+        height: 150,
+    },
+    promotionContent: {
+        padding: 16,
+        flex: 1,
+        justifyContent: 'space-between',
+    },
+    promotionBadge: {
+        backgroundColor: 'white',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        alignSelf: 'flex-start',
+    },
+    promotionBadgeText: {
+        color: '#ff6347',
+        fontWeight: 'bold',
+        fontSize: 12,
+    },
+    promotionTitle: {
+        color: 'white',
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginTop: 8,
+    },
+    promotionDiscount: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+        marginTop: 4,
+    },
+    promotionTag: {
+        color: 'rgba(255,255,255,0.9)',
+        fontSize: 12,
+        marginTop: 4,
+    },
+    cardFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        marginTop: 50,  // Add some top margin for better positioning
+    },
+    emptyStateText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginTop: 16,
+        color: '#333',
+    },
+    emptyStateSubtext: {
+        fontSize: 14,
+        color: '#888',
+        marginTop: 8,
+        textAlign: 'center',
+        paddingHorizontal: 32,
     },
 });
