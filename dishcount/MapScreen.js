@@ -3,6 +3,8 @@ import { StyleSheet, View, Dimensions, Text, TouchableOpacity, ScrollView } from
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import discountData from './assets/discountData';
+import * as Notifications from 'expo-notifications';
+import * as TaskManager from 'expo-task-manager';
 
 const MapScreen = () => {
     const [location, setLocation] = useState(null);

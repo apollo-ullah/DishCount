@@ -1,51 +1,14 @@
 {
   "expo": {
-    "name": "dishcount",
+    "name": "DishCount",
     "slug": "dishcount",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
-      "config": {
-        "googleMapsApiKey": "AIzaSyDLPwgTesXNBuLTHjxDpkl7O5csaC4_SJs"
-      },
-      "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "This app needs access to location when open to show nearby discounts.",
-        "NSLocationAlwaysUsageDescription": "This app needs access to location when in the background to show nearby discounts."
-      }
+      "bundleIdentifier": "com.yourcompany.dishcount"
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyDLPwgTesXNBuLTHjxDpkl7O5csaC4_SJs"
-        }
-      },
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "assets": ["./assets/"],
-    "plugins": [
-      [
-        "expo-location",
-        {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
-        }
-      ]
-    ],
-    "assetBundlePatterns": ["assets/*"]
+    "plugins": ["expo-location"]
   }
 }

@@ -248,6 +248,15 @@ const discountData = [
         LocallyOwned: "",
         Coordinates: "45.495136468611655, -73.5814720903378",
         Applicable: "student"
+    },
+    {
+        Store: "Schulich",
+        Discount: "0%off",
+        Form: "MCSA, MECA, HKSN, MTSA",
+        Category: "Drinks/Desserts",
+        LocallyOwned: "",
+        Coordinates: "45.50500207528078, -73.57557070553032",
+        Applicable: "student"
     }
 ];
 
