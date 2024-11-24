@@ -7,15 +7,43 @@
     "newArchEnabled": true,
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
+      "requireFullScreen": true,
       "bundleIdentifier": "com.yourcompany.dishcount",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses your location to show nearby discounts.",
         "NSLocationAlwaysUsageDescription": "This app needs access to your location at all times to notify you of discounts."
-      }
+      },
+      "supportedDevices": [
+        "iPhone11",
+        "iPhone11Pro",
+        "iPhone11ProMax",
+        "iPhone12",
+        "iPhone12Pro",
+        "iPhone12ProMax",
+        "iPhone12Mini",
+        "iPhone13",
+        "iPhone13Pro",
+        "iPhone13ProMax",
+        "iPhone13Mini",
+        "iPhone14",
+        "iPhone14Plus",
+        "iPhone14Pro",
+        "iPhone14ProMax",
+        "iPhone15",
+        "iPhone15Plus",
+        "iPhone15Pro",
+        "iPhone15ProMax"
+      ]
     },
     "plugins": [
-      "expo-location"
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "DishCount needs your location to find student discounts near you!",
+          "locationWhenInUsePermission": "Let DishCount show you nearby student deals!"
+        }
+      ]
     ],
     "android": {
       "permissions": [
@@ -23,6 +51,17 @@
         "android.permission.ACCESS_FINE_LOCATION"
       ],
       "package": "com.yourcompany.dishcount"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "16922383-54e7-436a-9741-b543c9f446eb"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/16922383-54e7-436a-9741-b543c9f446eb"
     }
   }
 }
