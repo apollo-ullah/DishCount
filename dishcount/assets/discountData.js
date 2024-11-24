@@ -257,6 +257,42 @@ const discountData = [
         LocallyOwned: "",
         Coordinates: "45.50500207528078, -73.57557070553032",
         Applicable: "student"
+    },
+    {
+        Store: "Rutherford 1",
+        Discount: "0%off",
+        Form: "MCSA, MECA, HKSN, MTSA",
+        Category: "Drinks/Desserts",
+        LocallyOwned: "",
+        Coordinates: "45.506899734319745, -73.57818088951008",
+        Applicable: "student"
+    },
+    {
+        Store: "Rutherford 2",
+        Discount: "0%off",
+        Form: "MCSA, MECA, HKSN, MTSA",
+        Category: "Drinks/Desserts",
+        LocallyOwned: "",
+        Coordinates: "45.506952774213595, -73.57841600400899",
+        Applicable: "student"
+    },
+    {
+        Store: "Rutherford 3",
+        Discount: "0%off",
+        Form: "MCSA, MECA, HKSN, MTSA",
+        Category: "Drinks/Desserts",
+        LocallyOwned: "",
+        Coordinates: "45.50704158354374, -73.57860280160313",
+        Applicable: "student"
+    },
+    {
+        Store: "Rutherford 4",
+        Discount: "0%off",
+        Form: "MCSA, MECA, HKSN, MTSA",
+        Category: "Drinks/Desserts",
+        LocallyOwned: "",
+        Coordinates: "45.50713858509372, -73.57879154429159",
+        Applicable: "student"
     }
 ];
 

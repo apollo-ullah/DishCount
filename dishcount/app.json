@@ -4,10 +4,15 @@
     "slug": "dishcount",
     "version": "1.0.0",
     "orientation": "portrait",
+    "newArchEnabled": true,
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.dishcount"
+      "bundleIdentifier": "com.yourcompany.dishcount",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to show nearby discounts.",
+        "NSLocationAlwaysUsageDescription": "This app needs access to your location at all times to notify you of discounts."
+      }
     },
     "plugins": ["expo-location"]
   }
