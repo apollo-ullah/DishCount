@@ -289,6 +289,33 @@ const discountData = [
         Applicable: "student",
         Promotions: "1",
         isCityWide: true
+    },
+    {
+        "Store": "Rutherford 1",
+        "Discount": "0% off",
+        "Form": "StudentID",
+        "Category": "Restaurant",
+        "Coordinates": "45.506863343301596, -73.57820097296255",
+        "AdditionalTag": "student",
+        "Promotions": "0"
+    },
+    {
+        "Store": "Rutherford 2",
+        "Discount": "0% off",
+        "Form": "StudentID",
+        "Category": "Restaurant",
+        "Coordinates": "45.50699551267524, -73.57849874926657",
+        "AdditionalTag": "student",
+        "Promotions": "0"
+    },
+    {
+        "Store": "Rutherford 3",
+        "Discount": "0% off",
+        "Form": "StudentID",
+        "Category": "Restaurant",
+        "Coordinates": "45.50713538685149, -73.57878033325956",
+        "AdditionalTag": "student",
+        "Promotions": "0"
     }
 ];
 

@@ -1,6 +1,9 @@
-import MapView, { Marker } from 'react-native-maps';
+import React, { useEffect, useState } from 'react';
+import MapView from 'react-native-maps';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import discountData from '../assets/discountData';  // Changed from { discountData }
+import * as Location from 'expo-location';
+import { Marker } from 'react-native-maps';
+import discountData from '../assets/discountData';
 
 export default function MapScreen({ route, navigation }) {
     const defaultRegion = {
@@ -17,9 +20,11 @@ export default function MapScreen({ route, navigation }) {
             <MapView
                 style={styles.map}
                 initialRegion={initialRegion}
+                showsUserLocation={true}
+                followsUserLocation={true}
+                showsMyLocationButton={true}
             >
                 {selectedStore ? (
-                    // Single marker for selected store
                     <Marker
                         coordinate={{
                             latitude: initialRegion.latitude,
@@ -28,7 +33,6 @@ export default function MapScreen({ route, navigation }) {
                         title={selectedStore}
                     />
                 ) : (
-                    // Show all markers when no store is selected
                     discountData.map((location, index) => {
                         if (location.Coordinates && location.Coordinates.trim() && !location.isCityWide) {
                             const [lat, lon] = location.Coordinates.split(',').map(coord => parseFloat(coord.trim()));
@@ -55,6 +59,7 @@ export default function MapScreen({ route, navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#fff',
     },
     map: {
         width: Dimensions.get('window').width,
