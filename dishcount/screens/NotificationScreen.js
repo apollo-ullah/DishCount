@@ -1,223 +1,116 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    SafeAreaView,
-    Alert,
-    Animated
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const NotificationScreen = ({ navigation }) => {
-    const [notifications, setNotifications] = React.useState([]);
-    let rowRefs = new Map();
-
-    React.useEffect(() => {
-        loadNotifications();
-    }, []);
-
-    const loadNotifications = async () => {
-        try {
-            const notifs = await AsyncStorage.getItem('notifications');
-            setNotifications(notifs ? JSON.parse(notifs) : []);
-        } catch (error) {
-            console.error('Error loading notifications:', error);
+export default function NotificationsScreen() {
+    const notifications = [
+        {
+            id: 1,
+            title: "Welcome to DishCount!",
+            message: "Discover student discounts around McGill.",
+            time: "Just now",
+            isNew: true
+        },
+        {
+            id: 2,
+            title: "CodeJam Special",
+            message: "Don't miss out on our special promotion!",
+            time: "1h ago",
+            isNew: true
+        },
+        {
+            id: 3,
+            title: "New Discount Added",
+            message: "Check out the latest student offers near you.",
+            time: "2h ago",
+            isNew: false
         }
-    };
-
-    const deleteNotification = async (index) => {
-        try {
-            const newNotifications = [...notifications];
-            newNotifications.splice(index, 1);
-            await AsyncStorage.setItem('notifications', JSON.stringify(newNotifications));
-            setNotifications(newNotifications);
-        } catch (error) {
-            console.error('Error deleting notification:', error);
-        }
-    };
-
-    const renderRightActions = (progress, dragX, index) => {
-        const trans = dragX.interpolate({
-            inputRange: [-100, 0],
-            outputRange: [0, 100],
-        });
-
-        return (
-            <Animated.View
-                style={[
-                    styles.deleteButton,
-                    {
-                        transform: [{ translateX: trans }],
-                    },
-                ]}>
-                <TouchableOpacity
-                    onPress={() => deleteNotification(index)}
-                    style={styles.deleteButtonInner}>
-                    <Ionicons name="trash-outline" size={24} color="white" />
-                </TouchableOpacity>
-            </Animated.View>
-        );
-    };
-
-    const clearAllNotifications = async () => {
-        Alert.alert(
-            "Clear All Notifications",
-            "Are you sure you want to clear all notifications?",
-            [
-                {
-                    text: "Cancel",
-                    style: "cancel"
-                },
-                {
-                    text: "Clear All",
-                    style: "destructive",
-                    onPress: async () => {
-                        await AsyncStorage.setItem('notifications', JSON.stringify([]));
-                        setNotifications([]);
-                    }
-                }
-            ]
-        );
-    };
+    ];
 
     return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaView style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity
-                        onPress={() => navigation.goBack()}
-                        style={styles.backButton}>
-                        <Ionicons name="close" size={24} color="black" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Notifications</Text>
-                    {notifications.length > 0 && (
-                        <TouchableOpacity
-                            onPress={clearAllNotifications}
-                            style={styles.clearButton}>
-                            <Text style={styles.clearButtonText}>Clear All</Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-                {notifications.length > 0 ? (
-                    notifications.map((notification, index) => (
-                        <Swipeable
-                            key={index}
-                            ref={ref => {
-                                if (ref && !rowRefs.get(index)) {
-                                    rowRefs.set(index, ref);
-                                }
-                            }}
-                            renderRightActions={(progress, dragX) =>
-                                renderRightActions(progress, dragX, index)}
-                            rightThreshold={40}
-                            overshootRight={false}
-                        >
-                            <View style={styles.notificationItem}>
-                                <Text style={styles.notificationTitle}>{notification.title}</Text>
-                                <Text style={styles.notificationBody}>{notification.body}</Text>
-                                <Text style={styles.notificationTime}>
-                                    {new Date(notification.timestamp).toLocaleString()}
-                                </Text>
-                            </View>
-                        </Swipeable>
-                    ))
-                ) : (
-                    <View style={styles.emptyState}>
-                        <Ionicons name="checkmark-circle-outline" size={50} color="#888" />
-                        <Text style={styles.emptyStateText}>You're all caught up!</Text>
-                        <Text style={styles.emptyStateSubtext}>
-                            No notifications at the moment
-                        </Text>
+        <ScrollView style={styles.container}>
+            {notifications.map((notification) => (
+                <View
+                    key={notification.id}
+                    style={[
+                        styles.notificationCard,
+                        notification.isNew && styles.newNotification
+                    ]}
+                >
+                    <View style={styles.notificationContent}>
+                        <View style={styles.titleRow}>
+                            <Text style={styles.title}>{notification.title}</Text>
+                            {notification.isNew && (
+                                <View style={styles.newBadge}>
+                                    <Text style={styles.newBadgeText}>NEW</Text>
+                                </View>
+                            )}
+                        </View>
+                        <Text style={styles.message}>{notification.message}</Text>
+                        <Text style={styles.time}>{notification.time}</Text>
                     </View>
-                )}
-            </SafeAreaView>
-        </GestureHandlerRootView>
+                </View>
+            ))}
+        </ScrollView>
     );
-};
+}
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#f5f5f5',
+        padding: 16,
     },
-    header: {
+    notificationCard: {
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    newNotification: {
+        borderLeftWidth: 4,
+        borderLeftColor: '#ff6347',
+    },
+    notificationContent: {
+        flex: 1,
+    },
+    titleRow: {
         flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        alignItems: 'center',
+        marginBottom: 8,
     },
-    backButton: {
-        padding: 8,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        flex: 1,
-        marginLeft: 16,
-    },
-    clearButton: {
-        padding: 8,
-    },
-    clearButtonText: {
-        color: '#ff3b30',
-        fontSize: 16,
-    },
-    notificationItem: {
-        padding: 16,
-        backgroundColor: '#fff',
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee',
-    },
-    notificationTitle: {
+    title: {
         fontSize: 16,
         fontWeight: 'bold',
-    },
-    notificationBody: {
-        fontSize: 14,
-        color: '#666',
-        marginTop: 4,
-    },
-    notificationTime: {
-        fontSize: 12,
-        color: '#999',
-        marginTop: 4,
-    },
-    deleteButton: {
-        backgroundColor: '#ff3b30',
-        width: 80,
-        height: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    deleteButtonInner: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    emptyState: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    emptyStateText: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginTop: 16,
         color: '#333',
     },
-    emptyStateSubtext: {
+    message: {
         fontSize: 14,
-        color: '#888',
-        marginTop: 8,
+        color: '#666',
+        marginBottom: 8,
+    },
+    time: {
+        fontSize: 12,
+        color: '#999',
+    },
+    newBadge: {
+        backgroundColor: '#ff6347',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    newBadgeText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
 });
-
-export default NotificationScreen;
