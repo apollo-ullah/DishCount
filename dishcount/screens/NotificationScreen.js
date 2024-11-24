@@ -1,71 +1,191 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Animated } from 'react-native';
+import { SwipeListView } from 'react-native-swipe-list-view';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function NotificationsScreen() {
-    const notifications = [
-        {
-            id: 1,
-            title: "Welcome to DishCount!",
-            message: "Discover student discounts around McGill.",
-            time: "Just now",
-            isNew: true
-        },
-        {
-            id: 2,
-            title: "CodeJam Special",
-            message: "Don't miss out on our special promotion!",
-            time: "1h ago",
-            isNew: true
-        },
-        {
-            id: 3,
-            title: "New Discount Added",
-            message: "Check out the latest student offers near you.",
-            time: "2h ago",
-            isNew: false
+export default function NotificationsScreen({ navigation }) {
+    const [notifications, setNotifications] = useState([]);
+
+    // Load notifications on mount
+    useEffect(() => {
+        loadNotifications();
+    }, []);
+
+    const loadNotifications = async () => {
+        try {
+            const savedNotifications = await AsyncStorage.getItem('@notifications');
+            if (savedNotifications === null) {
+                // First time - set default notifications
+                const defaultNotifications = [
+                    {
+                        key: '1',
+                        title: "Welcome to DishCount!",
+                        message: "Discover student discounts around McGill.",
+                        time: "Just now",
+                        isNew: true
+                    },
+                    {
+                        key: '2',
+                        title: "CodeJam Special",
+                        message: "Don't miss out on our special promotion!",
+                        time: "1h ago",
+                        isNew: true
+                    },
+                    {
+                        key: '3',
+                        title: "New Discount Added",
+                        message: "Check out the latest student offers near you.",
+                        time: "2h ago",
+                        isNew: false
+                    }
+                ];
+                setNotifications(defaultNotifications);
+                await AsyncStorage.setItem('@notifications', JSON.stringify(defaultNotifications));
+            } else {
+                setNotifications(JSON.parse(savedNotifications));
+            }
+        } catch (error) {
+            console.log('Error loading notifications:', error);
         }
-    ];
+    };
+
+    const saveNotifications = async (newNotifications) => {
+        try {
+            await AsyncStorage.setItem('@notifications', JSON.stringify(newNotifications));
+            setNotifications(newNotifications);
+        } catch (error) {
+            console.log('Error saving notifications:', error);
+        }
+    };
+
+    const deleteNotification = async (key) => {
+        const newNotifications = notifications.filter(notification => notification.key !== key);
+        await saveNotifications(newNotifications);
+    };
+
+    const clearAllNotifications = async () => {
+        await saveNotifications([]);
+    };
+
+    const renderItem = ({ item }) => (
+        <Animated.View style={styles.notificationCard}>
+            <View style={styles.notificationContent}>
+                <View style={styles.titleRow}>
+                    <Text style={styles.title}>{item.title}</Text>
+                    {item.isNew && (
+                        <View style={styles.newBadge}>
+                            <Text style={styles.newBadgeText}>NEW</Text>
+                        </View>
+                    )}
+                </View>
+                <Text style={styles.message}>{item.message}</Text>
+                <Text style={styles.time}>{item.time}</Text>
+            </View>
+        </Animated.View>
+    );
+
+    const renderHiddenItem = (data) => (
+        <View style={styles.rowBack}>
+            <TouchableOpacity
+                style={[styles.backRightBtn, styles.backRightBtnRight]}
+                onPress={() => deleteNotification(data.item.key)}
+            >
+                <Text style={styles.backTextWhite}>Delete</Text>
+            </TouchableOpacity>
+        </View>
+    );
 
     return (
-        <ScrollView style={styles.container}>
-            {notifications.map((notification) => (
-                <View
-                    key={notification.id}
-                    style={[
-                        styles.notificationCard,
-                        notification.isNew && styles.newNotification
-                    ]}
+        <SafeAreaView style={styles.safeArea}>
+            <View style={styles.header}>
+                <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={styles.backButton}
                 >
-                    <View style={styles.notificationContent}>
-                        <View style={styles.titleRow}>
-                            <Text style={styles.title}>{notification.title}</Text>
-                            {notification.isNew && (
-                                <View style={styles.newBadge}>
-                                    <Text style={styles.newBadgeText}>NEW</Text>
-                                </View>
-                            )}
-                        </View>
-                        <Text style={styles.message}>{notification.message}</Text>
-                        <Text style={styles.time}>{notification.time}</Text>
-                    </View>
+                    <Ionicons name="chevron-back" size={24} color="#ff6347" />
+                    <Text style={styles.backText}>Back</Text>
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Notifications</Text>
+                {notifications.length > 0 && (
+                    <TouchableOpacity onPress={clearAllNotifications}>
+                        <Text style={styles.clearAllText}>Clear All</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+            {notifications.length > 0 ? (
+                <SwipeListView
+                    data={notifications}
+                    renderItem={renderItem}
+                    renderHiddenItem={renderHiddenItem}
+                    rightOpenValue={-75}
+                    previewRowKey={'0'}
+                    previewOpenValue={-40}
+                    previewOpenDelay={3000}
+                    friction={50}
+                    tension={30}
+                    style={styles.container}
+                />
+            ) : (
+                <View style={styles.emptyContainer}>
+                    <Ionicons name="notifications-off-outline" size={64} color="#ccc" />
+                    <Text style={styles.emptyText}>No notifications</Text>
                 </View>
-            ))}
-        </ScrollView>
+            )}
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#f5f5f5',
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        backgroundColor: '#fff',
+    },
+    backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        position: 'absolute',
+        left: 16,
+        zIndex: 1,
+    },
+    backText: {
+        color: '#ff6347',
+        fontSize: 17,
+        marginLeft: -4,
+    },
+    headerTitle: {
+        fontSize: 17,
+        fontWeight: '600',
+        color: '#000',
+        textAlign: 'center',
+        flex: 1,
+    },
+    clearAllText: {
+        color: '#ff6347',
+        fontSize: 16,
+        position: 'absolute',
+        right: 16,
+    },
     container: {
         flex: 1,
         backgroundColor: '#f5f5f5',
-        padding: 16,
     },
     notificationCard: {
         backgroundColor: 'white',
-        borderRadius: 12,
         padding: 16,
-        marginBottom: 12,
+        marginHorizontal: 16,
+        marginVertical: 8,
+        borderRadius: 12,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -74,10 +194,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 3,
-    },
-    newNotification: {
-        borderLeftWidth: 4,
-        borderLeftColor: '#ff6347',
     },
     notificationContent: {
         flex: 1,
@@ -92,6 +208,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: '#333',
+        flex: 1,
     },
     message: {
         fontSize: 14,
@@ -107,10 +224,48 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
+        marginLeft: 8,
     },
     newBadgeText: {
         color: 'white',
         fontSize: 10,
         fontWeight: 'bold',
+    },
+    rowBack: {
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        paddingLeft: 15,
+        marginHorizontal: 16,
+        marginVertical: 8,
+    },
+    backRightBtn: {
+        alignItems: 'center',
+        bottom: 0,
+        justifyContent: 'center',
+        position: 'absolute',
+        top: 0,
+        width: 75,
+        borderRadius: 12,
+    },
+    backRightBtnRight: {
+        backgroundColor: '#FF3B30',
+        right: 0,
+    },
+    backTextWhite: {
+        color: '#FFF',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+    },
+    emptyText: {
+        marginTop: 16,
+        fontSize: 16,
+        color: '#666',
     },
 });
