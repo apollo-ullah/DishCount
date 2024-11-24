@@ -15,8 +15,10 @@ export default function NotificationsScreen({ navigation }) {
     const loadNotifications = async () => {
         try {
             const savedNotifications = await AsyncStorage.getItem('@notifications');
-            if (savedNotifications === null) {
-                // First time - set default notifications
+            if (savedNotifications !== null) {
+                setNotifications(JSON.parse(savedNotifications));
+            } else {
+                // Default notifications if none exist
                 const defaultNotifications = [
                     {
                         key: '1',
@@ -24,26 +26,10 @@ export default function NotificationsScreen({ navigation }) {
                         message: "Discover student discounts around McGill.",
                         time: "Just now",
                         isNew: true
-                    },
-                    {
-                        key: '2',
-                        title: "CodeJam Special",
-                        message: "Don't miss out on our special promotion!",
-                        time: "1h ago",
-                        isNew: true
-                    },
-                    {
-                        key: '3',
-                        title: "New Discount Added",
-                        message: "Check out the latest student offers near you.",
-                        time: "2h ago",
-                        isNew: false
                     }
                 ];
                 setNotifications(defaultNotifications);
                 await AsyncStorage.setItem('@notifications', JSON.stringify(defaultNotifications));
-            } else {
-                setNotifications(JSON.parse(savedNotifications));
             }
         } catch (error) {
             console.log('Error loading notifications:', error);
