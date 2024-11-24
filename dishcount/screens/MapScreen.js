@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import discountData from '../assets/discountData';
+import { GOOGLE_MAPS_API_KEY } from '@env';
 
 export default function MapScreen({ route, navigation }) {
     const initialRegion = route.params?.initialRegion;
@@ -17,6 +18,8 @@ export default function MapScreen({ route, navigation }) {
                     latitudeDelta: 0.01,
                     longitudeDelta: 0.01,
                 }}
+                provider={PROVIDER_GOOGLE}
+                apiKey={GOOGLE_MAPS_API_KEY}
             >
                 {discountData.map((discount, index) => {
                     const [lat, lon] = discount.Coordinates.split(',').map(coord => parseFloat(coord.trim()));
